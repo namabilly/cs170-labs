@@ -186,11 +186,22 @@ interrupt(registers_t *reg)
 		if (p <= 0 || p >= NPROCS || p == current->p_pid
 		    || proc_array[p].p_state == P_EMPTY)
 			current->p_registers.reg_eax = -1;
-		else if (proc_array[p].p_state == P_ZOMBIE)
+		else if (proc_array[p].p_state == P_ZOMBIE) {
 			current->p_registers.reg_eax = proc_array[p].p_exit_status;
-		else
-			current->p_registers.reg_eax = WAIT_TRYAGAIN;
-		schedule();
+            proc_array[p].p_state = P_EMPTY;
+        }
+		else {
+            proc_array[p].p_state = P_BLOCKED;
+            while(proc_array[p].p_state == P_BLOCKED) 
+                ; // sleep while blocked
+			if (proc_array[p].p_state == P_ZOMBIE) {
+                current->p_registers.reg_eax = proc_array[p].p_exit_status;
+                proc_array[p].p_state = P_EMPTY;
+            }
+            else
+                current->p_registers.reg_eax = -1;
+		}
+        schedule();
 	}
 
 	default:
@@ -240,7 +251,19 @@ do_fork(process_t *parent)
 	// You need to set one other process descriptor field as well.
 	// Finally, return the child's process ID to the parent.
 
-	return -1;
+    // find an empty process descriptor
+    pid_t i = 1;
+    while (i<NPROCS) {
+        if (proc_array[i].p_state == P_EMPTY) break;
+        i++;
+    }
+    if (i >= NPROCS) return -1; /* no empty descriptor */
+    // copy parent's register & stack
+    proc_array[i].p_registers = parent->p_registers; // register
+    copy_stack(&proc_array[i], parent); // stack
+    proc_array[i].p_pid = 0; // process ID set to 0
+
+	return 0;
 }
 
 static void
@@ -298,12 +321,17 @@ copy_stack(process_t *dest, process_t *src)
 
 	// YOUR CODE HERE!
 
-	src_stack_top = 0 /* YOUR CODE HERE */;
+    // set the corresponding memory address
+	src_stack_top = PROC1_STACK_ADDR + src->p_pid*PROC_STACK_SIZE;
 	src_stack_bottom = src->p_registers.reg_esp;
-	dest_stack_top = 0 /* YOUR CODE HERE */;
-	dest_stack_bottom = 0 /* YOUR CODE HERE: calculate based on the
-				 other variables */;
+	dest_stack_top = PROC1_STACK_ADDR + dest->p_pid*PROC_STACK_SIZE;
+	dest_stack_bottom = src_stack_bottom - src_stack_top + dest_stack_top;
 	// YOUR CODE HERE: memcpy the stack and set dest->p_registers.reg_esp
+    
+    // memcpy the stack
+    memcpy((void*)dest_stack_bottom, (void*)src_stack_bottom, sizeof(process_t));
+    dest->p_registers.reg_esp = dest_stack_bottom;
+
 }
 
 
