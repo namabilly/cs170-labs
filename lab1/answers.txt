@@ -20,7 +20,9 @@ incremented by 1, but the previous pid was already stored in %eax.
 
 7.
 I changed only in kernel.c and set the status to blocked and wait until it
-is changed.
+is changed. I was using a while loop to track the changes, apparently that
+didn't work out. I get the idea of having a wait queue, but I don't know
+how to have the process suspended and returned. 
 
 9.
 This is the base merge.c. Resolve the conflict so that the merged file will

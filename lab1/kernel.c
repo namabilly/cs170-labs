@@ -168,9 +168,11 @@ interrupt(registers_t *reg)
 		// before calling the system call.  The %eax REGISTER has
 		// changed by now, but we can read the APPLICATION's setting
 		// for this register out of 'current->p_registers'.
-		current->p_state = P_ZOMBIE;
+		
+        current->p_state = P_ZOMBIE;
 		current->p_exit_status = current->p_registers.reg_eax;
-		schedule();
+        //current->p_registers.reg_eax = c;
+        schedule();
 
 	case INT_SYS_WAIT: {
 		// 'sys_wait' is called to retrieve a process's exit status.
@@ -191,15 +193,12 @@ interrupt(registers_t *reg)
             proc_array[p].p_state = P_EMPTY;
         }
 		else {
-            proc_array[p].p_state = P_BLOCKED;
-            while(proc_array[p].p_state == P_BLOCKED) 
-                ; // sleep while blocked
-			if (proc_array[p].p_state == P_ZOMBIE) {
-                current->p_registers.reg_eax = proc_array[p].p_exit_status;
-                proc_array[p].p_state = P_EMPTY;
-            }
-            else
-                current->p_registers.reg_eax = -1;
+            /*
+            proc_array[p].p_state == P_BLOCKED;
+            current->p_registers.reg_eax = proc_array[p].p_exit_status;
+            proc_array[p].p_state = P_EMPTY;
+            */
+            current->p_registers.reg_eax = -2;
 		}
         schedule();
 	}
@@ -259,11 +258,13 @@ do_fork(process_t *parent)
     }
     if (i >= NPROCS) return -1; /* no empty descriptor */
     // copy parent's register & stack
+    proc_array[i].p_state = P_RUNNABLE; 
     proc_array[i].p_registers = parent->p_registers; // register
     copy_stack(&proc_array[i], parent); // stack
-    proc_array[i].p_pid = 0; // process ID set to 0
+    proc_array[i].p_registers.reg_eax = 0; // child return 0
+    proc_array[i].p_pid = i; // process ID set to i
 
-	return 0;
+	return i;
 }
 
 static void
@@ -325,7 +326,7 @@ copy_stack(process_t *dest, process_t *src)
 	src_stack_top = PROC1_STACK_ADDR + src->p_pid*PROC_STACK_SIZE;
 	src_stack_bottom = src->p_registers.reg_esp;
 	dest_stack_top = PROC1_STACK_ADDR + dest->p_pid*PROC_STACK_SIZE;
-	dest_stack_bottom = src_stack_bottom - src_stack_top + dest_stack_top;
+	dest_stack_bottom = dest_stack_top - (src_stack_top - src_stack_bottom);
 	// YOUR CODE HERE: memcpy the stack and set dest->p_registers.reg_esp
     
     // memcpy the stack
