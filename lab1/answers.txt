@@ -22,5 +22,11 @@ incremented by 1, but the previous pid was already stored in %eax.
 I changed only in kernel.c and set the status to blocked and wait until it
 is changed.
 
+9.
+This is the base merge.c. Resolve the conflict so that the merged file will
+print the same lines.
+
+11.
+merge A & B
 
 Anything else you'd like us to know:
