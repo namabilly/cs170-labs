@@ -221,7 +221,7 @@ cmd_free(command_t *cmd)
     for (i=0;i<MAXTOKENS+1;i++)
         if (cmd->argv[i])
             free(cmd->argv[i]);
-    free(cmd->argv);
+    //free(cmd->argv);
     // free redirctions
     for (i=0;i<3;i++)
         if (cmd->redirect_filename[i])

@@ -111,13 +111,15 @@ cmd_exec(command_t *cmd, int *pass_pipefd)
 	 * We've written some of the skeleton for you, but feel free to
 	 * change it.
 	 */
-
+    //printf("1");
+    //fflush(stdout);
 	// Create a pipe, if this command is the left-hand side of a pipe.
 	// Return -1 if the pipe fails.
 	if (cmd->controlop == CMD_PIPE) {
 		/* Your code here*/
+        if (pipe(pipefd) < 0) // create pipe
+            return -1;
 	}
-
 
 	// Fork the child and execute the command in that child.
 	// You will handle all redirections by manipulating file descriptors.
@@ -212,6 +214,18 @@ cmd_exec(command_t *cmd, int *pass_pipefd)
 	//    Explain what that race condition is, and fix it.
 	//    Hint: Investigate fchdir().
 	/* Your code here */
+    if ((pid = fork()) == 0) { // child process
+        dup2(pipefd[0], 1); // stdout
+        dup2(*pass_pipefd, 0); // stdin
+        execve(cmd->argv[0], cmd->argv, NULL);
+    }
+    else { // parent process
+        wait(0);
+        close(pipefd[0]);
+        close(pipefd[1]);
+    }
+
+    *pass_pipefd = pipefd[1];
 
 	// return the child process ID
 	return pid;
@@ -259,7 +273,9 @@ cmd_line_exec(command_t *cmdlist)
 		// If an error occurs in cmd_exec, feel free to abort().
 
 		/* Your code here */
-
+        cmd_status = cmd_exec(cmdlist, &pipefd); // exec
+        if (cmd_status < 0) abort();
+        waitpid(cmd_status, &wp_status, 0);
 		cmdlist = cmdlist->next;
 	}
 
