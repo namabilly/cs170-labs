@@ -217,6 +217,22 @@ cmd_free(command_t *cmd)
 		return;
 
 	/* Your code here. */
+    // free arguments
+    for (i=0;i<MAXTOKENS+1;i++)
+        if (cmd->argv[i])
+            free(cmd->argv[i]);
+    free(cmd->argv);
+    // free redirctions
+    for (i=0;i<3;i++)
+        if (cmd->redirect_filename[i])
+            free(cmd->redirect_filename[i]);
+    //free(cmd->redirect_filename);
+    // free up other linked commands
+    if (cmd->subshell)
+        cmd_free(cmd->subshell);
+    if (cmd->next)
+        cmd_free(cmd->next);
+    free(cmd);
 }
 
 
