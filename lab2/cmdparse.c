@@ -310,7 +310,13 @@ cmd_parse(parsestate_t *parsestate)
              //     have been given fit together. (It may be helpful to
              //     look over cmdparse.h again.)
             /* Your code here. */
-			break;
+            // check whether the previous token is valid
+            if (i > 0)
+                goto error;
+            // enter subshell and call cmd_line_parse
+            cmd->subshell = cmd_line_parse(parsestate, 1);
+            i++;
+            break;
 		default:
 			parse_ungettoken(parsestate);
 			goto done;
@@ -321,7 +327,7 @@ cmd_parse(parsestate_t *parsestate)
 	// NULL-terminate the argv list
 	cmd->argv[i] = 0;
 
-	if (i == 0) {
+	if (i == 0 && !cmd->subshell) {
 		/* Empty command */
 		cmd_free(cmd);
 		return NULL;
