@@ -72,6 +72,8 @@ class EStore {
     // TODO: More needed here.
     smutex_t mutex;
     scond_t cond;
+    double discount;
+    double shipping_cost;
 
     public:
 

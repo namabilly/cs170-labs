@@ -24,6 +24,8 @@ EStore(bool enableFineMode)
     //fineMode = enableFineMode;
     smutex_init(&mutex);
     scond_init(&cond);
+    discount = 0;
+    shipping_cost = 3;
 }
 
 EStore::
@@ -75,7 +77,7 @@ buyItem(int item_id, double budget)
         return;
     
     smutex_lock(&mutex);
-    while (it.quantity == 0 || budget < it.price * it.discount) // wait
+    while (it.quantity == 0 || budget < it.price * (1-it.discount)) // wait
         scond_wait(&cond, &mutex);
     it.quantity--;
     scond_broadcast(&cond, &mutex);
@@ -272,6 +274,15 @@ void EStore::
 discountItem(int item_id, double discount)
 {
     // TODO: Your code here.
+    Item it = inventory[item_id];
+    if (!it.valid) // nonexist
+        return;
+    
+    smutex_lock(&mutex);
+    it.discount = discount;
+    scond_broadcast(&cond, &mutex);
+    smutex_lock(&mutex);
+
 }
 
 /*
@@ -290,6 +301,11 @@ void EStore::
 setShippingCost(double cost)
 {
     // TODO: Your code here.
+    smutex_lock(&mutex);
+    shipping_cost = cost;
+    scond_broadcast(&cond, &mutex);
+    smutex_unlock(&mutex);
+
 }
 
 /*
@@ -308,6 +324,12 @@ void EStore::
 setStoreDiscount(double discount)
 {
     // TODO: Your code here.
+    // I suppose it should wake no matter what
+    smutex_lock(&mutex);
+    this->discount = discount;
+    scond_broadcast(&cond, &mutex);
+    smutex_unlock(&mutex);
+
 }
 
 

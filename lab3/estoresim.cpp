@@ -109,7 +109,10 @@ supplier(void* arg)
     // TODO: Your code here.
     Simulation* sim = (Simulation*) arg;
     Task task = sim->supplierTasks.dequeue();
-    printf("sup\n");
+    sthread_t sup;
+    //printf("sup\n");
+    sthread_create(&sup, (void*(*)(void*))task.handler, task.arg);
+    sthread_join(sup);
     return NULL; // Keep compiler happy.
 }
 
@@ -133,7 +136,10 @@ customer(void* arg)
     // TODO: Your code here.
     Simulation* sim = (Simulation*) arg;
     Task task = sim->customerTasks.dequeue();
-    printf("cus\n");
+    sthread_t cus;
+    //printf("cus\n");
+    sthread_create(&cus, (void*(*)(void*))task.handler, task.arg);
+    sthread_join(cus);
     return NULL; // Keep compiler happy.
 }
 
