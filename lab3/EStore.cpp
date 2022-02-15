@@ -21,12 +21,17 @@ EStore(bool enableFineMode)
     : fineMode(enableFineMode)
 {
     // TODO: Your code here.
+    //fineMode = enableFineMode;
+    smutex_init(&mutex);
+    scond_init(&cond);
 }
 
 EStore::
 ~EStore()
 {
     // TODO: Your code here.
+    smutex_destroy(&mutex);
+    scond_destroy(&cond);
 }
 
 /*
@@ -65,6 +70,17 @@ buyItem(int item_id, double budget)
     assert(!fineModeEnabled());
 
     // TODO: Your code here.
+    Item it = inventory[item_id];
+    if (!it.valid) // invalid item
+        return;
+    
+    smutex_lock(&mutex);
+    while (it.quantity == 0 || budget < it.price * it.discount) // wait
+        scond_wait(&cond, &mutex);
+    it.quantity--;
+    scond_broadcast(&cond, &mutex);
+    smutex_unlock(&mutex);
+
 }
 
 /*
@@ -137,6 +153,19 @@ void EStore::
 addItem(int item_id, int quantity, double price, double discount)
 {
     // TODO: Your code here.
+    Item it = inventory[item_id];
+    if (it.valid) // already exists
+        return;
+
+    smutex_lock(&mutex);
+    // log info
+    it.valid = true;
+    it.quantity = quantity;
+    it.price = price;
+    it.discount = discount;
+    scond_broadcast(&cond, &mutex);
+    smutex_unlock(&mutex);
+
 }
 
 /*
@@ -158,6 +187,15 @@ void EStore::
 removeItem(int item_id)
 {
     // TODO: Your code here.
+    Item it = inventory[item_id];
+    if (!it.valid) // does not carry
+        return;
+    
+    smutex_lock(&mutex);
+    it.valid = false;
+    scond_broadcast(&cond, &mutex);
+    smutex_unlock(&mutex);
+
 }
 
 /*
@@ -176,6 +214,15 @@ void EStore::
 addStock(int item_id, int count)
 {
     // TODO: Your code here.
+    Item it = inventory[item_id];
+    if (!it.valid) // does not carry
+        return;
+
+    smutex_lock(&mutex);
+    it.quantity += count;
+    scond_broadcast(&cond, &mutex);
+    smutex_unlock(&mutex);
+
 }
 
 /*
@@ -196,6 +243,15 @@ void EStore::
 priceItem(int item_id, double price)
 {
     // TODO: Your code here.
+    Item it = inventory[item_id];
+    if (!it.valid)
+        return;
+    
+    smutex_lock(&mutex);
+    it.price = price;
+    scond_broadcast(&cond, &mutex);
+    smutex_unlock(&mutex);
+
 }
 
 /*

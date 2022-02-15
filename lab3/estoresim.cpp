@@ -109,7 +109,7 @@ supplier(void* arg)
     // TODO: Your code here.
     Simulation* sim = (Simulation*) arg;
     Task task = sim->supplierTasks.dequeue();
-    
+    printf("sup\n");
     return NULL; // Keep compiler happy.
 }
 
@@ -133,6 +133,7 @@ customer(void* arg)
     // TODO: Your code here.
     Simulation* sim = (Simulation*) arg;
     Task task = sim->customerTasks.dequeue();
+    printf("cus\n");
     return NULL; // Keep compiler happy.
 }
 
