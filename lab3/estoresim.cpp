@@ -1,8 +1,10 @@
 #include <cstring>
 #include <cstdlib>
+#include <cstdio>
 
 #include "EStore.h"
 #include "TaskQueue.h"
+#include "RequestGenerator.h"
 
 class Simulation
 {
@@ -43,6 +45,11 @@ static void*
 supplierGenerator(void* arg)
 {
     // TODO: Your code here.
+    Simulation* sim = (Simulation*) arg;
+    SupplierRequestGenerator srg = SupplierRequestGenerator(&sim->supplierTasks);
+    srg.enqueueTasks(sim->maxTasks, &sim->store);
+    srg.enqueueStops(sim->numSuppliers);
+    printf("finish srg\n");
     return NULL; // Keep compiler happy.
 }
 
@@ -74,6 +81,11 @@ static void*
 customerGenerator(void* arg)
 {
     // TODO: Your code here.
+    Simulation* sim = (Simulation*) arg;
+    CustomerRequestGenerator crg = CustomerRequestGenerator(&sim->customerTasks, sim->store.fineModeEnabled());
+    crg.enqueueTasks(sim->maxTasks, &sim->store);
+    crg.enqueueStops(sim->numCustomers);
+    printf("finish crg\n");
     return NULL; // Keep compiler happy.
 }
 
@@ -95,6 +107,9 @@ static void*
 supplier(void* arg)
 {
     // TODO: Your code here.
+    Simulation* sim = (Simulation*) arg;
+    Task task = sim->supplierTasks.dequeue();
+    
     return NULL; // Keep compiler happy.
 }
 
@@ -116,6 +131,8 @@ static void*
 customer(void* arg)
 {
     // TODO: Your code here.
+    Simulation* sim = (Simulation*) arg;
+    Task task = sim->customerTasks.dequeue();
     return NULL; // Keep compiler happy.
 }
 
@@ -146,6 +163,33 @@ static void
 startSimulation(int numSuppliers, int numCustomers, int maxTasks, bool useFineMode)
 {
     // TODO: Your code here.
+    // create Simulation
+    Simulation sim = Simulation(useFineMode);
+    sim.maxTasks = maxTasks;
+    sim.numSuppliers = numSuppliers;
+    sim.numCustomers = numCustomers;
+
+    // create threads
+    printf("before gen\n");
+    sthread_t sup_gen, cus_gen, sup[numSuppliers], cus[numCustomers];
+    sthread_create(&sup_gen, supplierGenerator, &sim);
+    sthread_create(&cus_gen, customerGenerator, &sim);
+
+    for(int i=0;i<numSuppliers;i++)
+        sthread_create(&sup[i], supplier, &sim);
+    for(int i=0;i<numCustomers;i++)
+        sthread_create(&cus[i], customer, &sim);
+    printf("after gen\n");
+    // wait for all thread to exit and then return
+    sthread_join(sup_gen);
+    sthread_join(cus_gen);
+    for(int i=0;i<numSuppliers;i++)
+        sthread_join(sup[i]);
+    for(int i=0;i<numCustomers;i++)
+        sthread_join(cus[i]);
+    printf("finish\n");
+    return;
+
 }
 
 int main(int argc, char **argv)

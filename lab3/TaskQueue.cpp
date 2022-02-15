@@ -1,16 +1,20 @@
-
+#include <queue>
 #include "TaskQueue.h"
 
 TaskQueue::
 TaskQueue()
 {
     // TODO: Your code here.
+    smutex_init(&mutex);
+    scond_init(&cond);
 }
 
 TaskQueue::
 ~TaskQueue()
 {
     // TODO: Your code here.
+    smutex_destroy(&mutex);
+    scond_destroy(&cond);
 }
 
 /*
@@ -28,7 +32,7 @@ int TaskQueue::
 size()
 {
     // TODO: Your code here.
-    return -999; // Keep compiler happy until routine done.
+    return q.size(); // Keep compiler happy until routine done.
 }
 
 /*
@@ -46,7 +50,7 @@ bool TaskQueue::
 empty()
 {
     // TODO: Your code here.
-    return false; // Keep compiler happy until routine done.
+    return q.empty(); // Keep compiler happy until routine done.
 }
 
 /*
@@ -64,6 +68,10 @@ void TaskQueue::
 enqueue(Task task)
 {
     // TODO: Your code here.
+    smutex_lock(&mutex);
+    q.push(task);
+    scond_signal(&cond, &mutex);
+    smutex_unlock(&mutex);
 }
 
 /*
@@ -82,6 +90,13 @@ Task TaskQueue::
 dequeue()
 {
     // TODO: Your code here.
-    return Task(); // Keep compiler happy until routine done.
+    smutex_lock(&mutex);
+    while (empty())
+        scond_wait(&cond, &mutex);
+    Task task = q.front();
+    q.pop();
+    scond_signal(&cond, &mutex);
+    smutex_unlock(&mutex);
+    return task; // Keep compiler happy until routine done.
 }
 
