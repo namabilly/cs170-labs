@@ -1,5 +1,5 @@
-Name:
-PERM #:
+Name: Billy Wu
+PERM #: 3552379
 
 Collaborators (who you talked to about the lab, what you talked about):
 
@@ -15,29 +15,36 @@ Other acknowledgments:
 Part 1:
 
 Exercise 1:
-
+It searches for functions that contain smutex in all files and prints them. 
+And then it prints the files that import these files.
+./sthread.cpp:void smutex_init(smutex_t *mutex)
+./sthread.cpp:void smutex_destroy(smutex_t *mutex)
+./sthread.cpp:void smutex_lock(smutex_t *mutex)
 
 Exercise 2:
-
+grep Task RequestGenerator.cpp
+grep return *.h
 
 Exercise 3:
-
+./sthread.h:void smutex_init(smutex_t *mutex);
+It prints all function declaration that starts with "smutex".
 
 Exercise 4:
-
+include/linux/blkdev.h
 
 Exercise 5: 
-
+It is a struct. But I got "tag not found error"
 
 Exercise 6: 
-
+There are 3. They are defined in kernel/sched/auto_group.c and kernel/sched/debug.c
 
 Exercise 7: 
-
+find . -name "*.h" | wc
+3915
 
 Part 2:
 (Exercise 8 is a coding exercise)
-
+;
 
 Exercise 9:
 
