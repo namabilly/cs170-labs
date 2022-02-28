@@ -47,16 +47,17 @@ Part 2:
 ;
 
 Exercise 9:
-
++45 r = h;
+h = NULL;
 
 Exercise 10:
-
+gdb cannot be run, timed out
 
 Exercise 11:
-
+0
 
 Exercise 12:
-
+sys_yield
 
 (Exercise 13 is a coding exercise)
 
@@ -67,7 +68,7 @@ Part 3:
 Exercise 14:
 
 The name of the scheduling algorithm is:
-
+round-robin
 
 (Exercise 15 is a coding exercise)
 
