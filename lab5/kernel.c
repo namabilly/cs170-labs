@@ -133,6 +133,25 @@ void kernel(const char* command) {
     run(&processes[1]);
 }
 
+// copy pagetable
+//    Copy pagetable and assign a owner
+x86_pagetable* copy_pagetable(x86_pagetable* pagetable, int8_t owner) {
+    x86_pagetable new_pagetable_memory;
+    x86_pagetable level2_pagetable;
+    x86_pagetable* new_pagetable = &new_pagetable_memory;
+    memset(new_pagetable, 0, sizeof(x86_pagetable));
+    new_pagetable->entry[0] = (x86_pageentry_t) &level2_pagetable | PTE_P |PTE_W | PTE_U;
+    //set_pagetable(new_pagetable);
+    log_printf("new table");
+    for (uintptr_t va = 0; va < MEMSIZE_VIRTUAL; va += PAGESIZE) {
+        vamapping vam = virtual_memory_lookup(pagetable, va);
+        physical_page_alloc(vam.pa, owner);
+        virtual_memory_map(new_pagetable, va, vam.pn, PAGESIZE, vam.perm);
+        //physical_page_alloc(vam.pa, owner);
+    }
+    return new_pagetable;
+}
+
 
 // process_setup(pid, program_number)
 //    Load application program `program_number` as process number `pid`.
@@ -141,10 +160,11 @@ void kernel(const char* command) {
 
 void process_setup(pid_t pid, int program_number) {
     process_init(&processes[pid], 0);
-
+    
     // Exercise 2: your code here
-    processes[pid].p_pagetable = kernel_pagetable;
-    ++pageinfo[PAGENUMBER(kernel_pagetable)].refcount;
+    processes[pid].p_pagetable = copy_pagetable(kernel_pagetable, pid);
+    ++pageinfo[PAGENUMBER(processes[pid].p_pagetable)].refcount;
+    //processes[pid].p_pagetable->entry[0] = (x86_pageentry_t) PTE_ADDR(processes[pid].p_pagetable->entry[0]) | PTE_P | PTE_W | PTE_U;
     int r = program_load(&processes[pid], program_number);
     assert(r >= 0);
 
