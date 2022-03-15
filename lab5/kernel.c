@@ -118,6 +118,9 @@ void kernel(const char* command) {
     //    [0,PROC_START_ADDR). This is indicated in the lab description,
     //    and we repeat it in this hint.
 
+    virtual_memory_map(kernel_pagetable, 0, 0, PROC_START_ADDR, PTE_P | PTE_W);
+    virtual_memory_map(kernel_pagetable, 0xB8000, 0xB8000, PAGESIZE, PTE_U | PTE_P | PTE_W);
+
     if (command && strcmp(command, "fork") == 0)
         process_setup(1, 4);
     else if (command && strcmp(command, "forkexit") == 0)
@@ -231,6 +234,8 @@ void exception(x86_registers* reg) {
         //   under PROC_START_ADDR or to the page right before MEMSIZE_VIRTUAL
         //   (which would be used as the process's stack later)
 
+        if (addr < PROC_START_ADDR || addr > MEMSIZE_VIRTUAL)
+            break;
 
         // Exercise 3: your code here
         int r = physical_page_alloc(addr, current->p_pid);
